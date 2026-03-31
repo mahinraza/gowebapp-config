@@ -1,0 +1,117 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mysql
+  namespace: gowebapp
+spec:
+  serviceName: mysql-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      # Init container — injects the app password into init.sql
+      initContainers:
+        - name: prepare-init-sql
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              sed "s/__MYSQL_APP_PASSWORD__/${MYSQL_APP_PASSWORD}/g" \
+                /sql-template/init.sql > /sql-out/init.sql
+          env:
+            - name: MYSQL_APP_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: gowebapp-secrets
+                  key: mysql-app-password
+          volumeMounts:
+            - name: sql-template
+              mountPath: /sql-template
+            - name: sql-out
+              mountPath: /sql-out
+
+      # Main MySQL container
+      containers:
+        - name: mysql
+          image: mysql:8.0
+          ports:
+            - containerPort: 3306
+              name: mysql
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: gowebapp-secrets
+                  key: mysql-root-password
+            # Tell MySQL to create the DB on first start
+            - name: MYSQL_DATABASE
+              value: gowebapp
+          volumeMounts:
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+            # Processed init.sql goes here — MySQL auto-runs it on first boot
+            - name: sql-out
+              mountPath: /docker-entrypoint-initdb.d
+          livenessProbe:
+            exec:
+              command: ["mysqladmin", "ping", "-h", "localhost"]
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - "mysql -u root -p${MYSQL_ROOT_PASSWORD} -e 'SELECT 1'"
+            initialDelaySeconds: 15
+            periodSeconds: 5
+            timeoutSeconds: 3
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 1Gi
+
+      volumes:
+        - name: sql-template
+          configMap:
+            name: mysql-init-sql
+        - name: sql-out
+          emptyDir: {}
+
+  # PVC created automatically for each pod by StatefulSet
+  volumeClaimTemplates:
+    - metadata:
+        name: mysql-data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        resources:
+          requests:
+            storage: 5Gi
+        # Uncomment and set your StorageClass if needed:
+        # storageClassName: standard
+
+---
+# Headless service — gives MySQL a stable DNS name: mysql-service.gowebapp.svc.cluster.local
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service
+  namespace: gowebapp
+spec:
+  selector:
+    app: mysql
+  ports:
+    - port: 3306
+      targetPort: 3306
+      name: mysql
+  clusterIP: None   # headless — required for StatefulSet DNS
