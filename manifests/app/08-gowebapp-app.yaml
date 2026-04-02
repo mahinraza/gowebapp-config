@@ -3,8 +3,6 @@ kind: Application
 metadata:
   name: gowebapp
   namespace: argocd
-  finalizers:
-    - resources-finalizer.argocd.argoproj.io
 spec:
   project: gowebapp-project
   
