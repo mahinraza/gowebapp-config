@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-service
+  namespace: database
+  labels:
+    app: mysql
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  type: ExternalName
+  externalName: db-mysql-nyc3-99409-do-user-33721151-0.e.db.ondigitalocean.com
+  ports:
+    - name: mysql
+      port: 25060
+      targetPort: 25060 
