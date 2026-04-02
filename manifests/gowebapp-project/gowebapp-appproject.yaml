@@ -23,6 +23,8 @@ spec:
   clusterResourceWhitelist:
     - group: ""
       kind: Namespace
+    - group: "argoproj.io"
+      kind: Application
   
   # Allow namespace-scoped resources your app needs
   namespaceResourceWhitelist:
@@ -86,7 +88,7 @@ spec:
       kind: ClusterRole
     - group: rbac.authorization.k8s.io
       kind: ClusterRoleBinding
-      
+
   # Roles remain the same
   roles:
     - name: dev-readonly
