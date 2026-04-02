@@ -82,9 +82,11 @@ spec:
   
   # Block dangerous cluster-scoped resources
   clusterResourceBlacklist:
-    - group: '*'
-      kind: '*'
-  
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRole
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRoleBinding
+      
   # Roles remain the same
   roles:
     - name: dev-readonly
