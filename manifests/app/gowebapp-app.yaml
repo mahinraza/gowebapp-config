@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gowebapp
+  namespace: argocd
+spec:
+  project: gowebapp-project
+  source:
+    repoURL: https://github.com/mahinraza/gowebapp-config.git
+    targetRevision: main
+    path: manifests/app
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: gowebapp
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

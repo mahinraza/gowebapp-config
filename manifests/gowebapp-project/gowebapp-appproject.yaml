@@ -1,0 +1,50 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: gowebapp-project
+  namespace: argocd
+spec:
+  description: Project for gowebapp workloads
+  sourceRepos:
+    - https://github.com/mahinraza/gowebapp-config.git
+  destinations:
+    - namespace: gowebapp
+      server: https://kubernetes.default.svc
+    - namespace: database
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: ""
+      kind: Namespace
+  namespaceResourceWhitelist:
+    - group: apps
+      kind: Deployment
+    - group: external-secrets.io
+      kind: ExternalSecret
+    - group: ""
+      kind: Service
+    - group: ""
+      kind: ConfigMap
+    - group: ""
+      kind: Secret
+    - group: "batch"
+      kind: Job
+    - group: "autoscaling"
+      kind: HorizontalPodAutoscaler
+  clusterResourceBlacklist:
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRole
+    - group: rbac.authorization.k8s.io
+      kind: ClusterRoleBinding
+  roles:
+    - name: dev-readonly
+      description: Read-only access for developers
+      policies:
+        - p, proj:gowebapp-project:dev-readonly, applications, get, gowebapp-project/*, allow
+      groups:
+        - gowebapp-devs
+    - name: platform-admin
+      description: Full control for platform team
+      policies:
+        - p, proj:gowebapp-project:platform-admin, applications, *, gowebapp-project/*, allow
+      groups:
+        - platform-team
