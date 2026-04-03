@@ -1,5 +1,7 @@
 ```bash
-kubectl apply -f manifests/app/
+# kubectl apply -f manifests/app/
+kubectl apply -f manifests/argo/gowebapp-appproject.yaml
+kubectl apply -f manifests/argo/gowebapp-app.yaml
 ```
 
 ```bash

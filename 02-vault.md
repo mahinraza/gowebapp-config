@@ -90,6 +90,9 @@ export VAULT_IP='43.204.237.206'
 export VAULT_ADDR="http://${VAULT_IP}:8200"
 vault status
 
+# Create namespace if not exists
+kubectl create namespace external-secrets --dry-run=client -o yaml | kubectl apply -f -
+
 cat << EOF > endpoint-slice.yaml
 apiVersion: discovery.k8s.io/v1
 kind: EndpointSlice
@@ -190,7 +193,7 @@ vault secrets list -detailed
 # Store ROOT credentials (for admin tasks)
 vault kv put kv/prod/do/database/mysql/root_cred \
   username="doadmin" \
-  password="AVNS_dnhjoFiFkUd_Ah97J5P"
+  password="AVNS_iIrzYX1Jih9ShTjPl3X"
 
 # Store APPLICATION credentials (for the app to use)
 vault kv put kv/prod/gowebapp/database/app_cred \
@@ -277,9 +280,6 @@ vault kv get kv/prod/gowebapp/database/app
 # Test that policy blocks other paths
 # vault kv get gowebapp/admin/secrets
 # Error: permission denied ✅ (blocked correctly)
-
-# Create namespace if not exists
-kubectl create namespace external-secrets --dry-run=client -o yaml | kubectl apply -f -
 
 # Create secrets for AppRole credentials
 kubectl create secret generic vault-gowebapp-roleid \

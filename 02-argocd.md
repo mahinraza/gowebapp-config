@@ -36,7 +36,7 @@ argocd login localhost:8080
 argocd repo add https://github.com/mahinraza/gowebapp-config.git \
   --name gowebapp-config-repo \
   --username mahinraza \
-  --password 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
+  --password <your github pat token>
 ```
 ```bash
 VERSION=$(curl -L -s https://raw.githubusercontent.com/argoproj/argo-cd/stable/VERSION)
