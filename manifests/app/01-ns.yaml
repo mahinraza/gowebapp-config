@@ -6,13 +6,3 @@ metadata:
     app: gowebapp
   annotations:
     argocd.argoproj.io/sync-wave: "-2"
-
----
-
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: database
-  annotations:
-    argocd.argoproj.io/sync-wave: "-2"
-  

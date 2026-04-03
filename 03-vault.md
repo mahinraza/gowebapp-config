@@ -203,7 +203,7 @@ vault kv put kv/prod/gowebapp/database/app_cred \
   session_secret_key="r4B?EThaSEh_drudR7P_hub=s#s2Pah"
 
 vault kv put kv/prod/do/database/mysql/endpoint \
-  host="mysql-service.database.svc.cluster.local" \
+  host="mysql-service.gowebapp.svc.cluster.local" \
   port=25060
 
 # Verify both secrets
