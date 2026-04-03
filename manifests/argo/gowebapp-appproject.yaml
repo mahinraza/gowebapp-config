@@ -6,27 +6,28 @@ metadata:
 spec:
   description: Project for gowebapp workloads
   
-  # Allow resources from this Git repo
+  # Allow resources from both Git repo AND Helm repo
   sourceRepos:
     - https://github.com/mahinraza/gowebapp-config.git
+    - https://mahinraza.github.io/helm-charts/
   
   # Allow deployments to these namespaces
   destinations:
     - namespace: gowebapp
       server: https://kubernetes.default.svc
-    - namespace: database
-      server: https://kubernetes.default.svc
-    - namespace: external-secrets
-      server: https://kubernetes.default.svc  # Added for ESO
+    # - namespace: database
+    #   server: https://kubernetes.default.svc
+    # - namespace: external-secrets
+    #   server: https://kubernetes.default.svc
   
-  # Allow cluster-scoped resources (minimal)
+  # Allow cluster-scoped resources
   clusterResourceWhitelist:
     - group: ""
       kind: Namespace
-    - group: "argoproj.io"
-      kind: Application
+    # - group: "argoproj.io"
+    #   kind: Application
   
-  # Allow namespace-scoped resources your app needs
+  # Allow namespace-scoped resources
   namespaceResourceWhitelist:
     # Core resources
     - group: ""
@@ -37,50 +38,56 @@ spec:
       kind: ConfigMap
     - group: ""
       kind: Secret
-    - group: ""
-      kind: PersistentVolumeClaim
+    # - group: ""
+    #   kind: PersistentVolumeClaim
+    # - group: ""
+    #   kind: ServiceAccount
     
     # Apps resources
     - group: apps
       kind: Deployment
     - group: apps
       kind: ReplicaSet
-    - group: apps
-      kind: StatefulSet
+    # - group: apps
+    #   kind: StatefulSet
+    # - group: apps
+    #   kind: DaemonSet
     
     # Batch resources
     - group: batch
       kind: Job
-    - group: batch
-      kind: CronJob
+    # - group: batch
+    #   kind: CronJob
     
     # External Secrets Operator
     - group: external-secrets.io
       kind: ExternalSecret
-    - group: external-secrets.io
-      kind: SecretStore
-    - group: external-secrets.io
-      kind: ClusterSecretStore  # If using cluster-scoped
+    # - group: external-secrets.io
+    #   kind: SecretStore
+    # - group: external-secrets.io
+    #   kind: ClusterSecretStore
     
     # Networking
     - group: networking.k8s.io
-      kind: NetworkPolicy
-    - group: networking.k8s.io
       kind: Ingress
+    # - group: networking.k8s.io
+    #   kind: NetworkPolicy
     
     # Autoscaling
     - group: autoscaling
       kind: HorizontalPodAutoscaler
     
-    # Monitoring
-    - group: monitoring.coreos.com
-      kind: ServiceMonitor
+    # Cert Manager
+    - group: cert-manager.io
+      kind: Certificate
+    - group: cert-manager.io
+      kind: Issuer
     
-    # RBAC (namespace-scoped only)
-    - group: rbac.authorization.k8s.io
-      kind: Role
-    - group: rbac.authorization.k8s.io
-      kind: RoleBinding
+    # # RBAC
+    # - group: rbac.authorization.k8s.io
+    #   kind: Role
+    # - group: rbac.authorization.k8s.io
+    #   kind: RoleBinding
   
   # Block dangerous cluster-scoped resources
   clusterResourceBlacklist:
@@ -88,8 +95,10 @@ spec:
       kind: ClusterRole
     - group: rbac.authorization.k8s.io
       kind: ClusterRoleBinding
-
-  # Roles remain the same
+    # - group: "*"
+    #   kind: "*"  # Block everything not explicitly whitelisted
+  
+  # Roles
   roles:
     - name: dev-readonly
       description: Read-only access for developers
