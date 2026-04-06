@@ -9,7 +9,7 @@ spec:
   source:
     repoURL: https://mahinraza.github.io/helm-charts/
     chart: gowebapp
-    targetRevision: 2.0.0
+    targetRevision: 3.0.0
     helm:
       releaseName: gowebapp
       parameters:
