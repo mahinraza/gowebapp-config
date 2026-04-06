@@ -1,0 +1,45 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: gowebapp
+  namespace: argocd
+spec:
+  project: gowebapp-project
+  
+  source:
+    repoURL: https://github.com/mahinraza/gowebapp-config.git
+    targetRevision: main
+    path: manifests/app-aws
+    directory:
+      recurse: true
+  
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: gowebapp
+  
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PruneLast=true
+      - ApplyOutOfSyncOnly=true
+      - RespectIgnoreDifferences=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  
+  # Ignore differences for hook-deleted resources
+  ignoreDifferences:
+    - group: batch
+      kind: Job
+      name: gowebapp-db-init
+      jsonPointers:
+        - /status
+        - /metadata/resourceVersion
+        - /metadata/annotations

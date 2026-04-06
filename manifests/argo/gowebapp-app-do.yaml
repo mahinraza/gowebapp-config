@@ -9,7 +9,7 @@ spec:
   source:
     repoURL: https://github.com/mahinraza/gowebapp-config.git
     targetRevision: main
-    path: manifests/app
+    path: manifests/app-do
     directory:
       recurse: true
   
