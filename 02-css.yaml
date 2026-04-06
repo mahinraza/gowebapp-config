@@ -1,0 +1,31 @@
+apiVersion: external-secrets.io/v1
+kind: ClusterSecretStore
+metadata:
+  name: aws-secretsmanager-store
+spec:
+  provider:
+    aws:
+      service: SecretsManager
+      region: ap-south-1
+      auth:
+        jwt:
+          serviceAccountRef:
+            name: external-secrets
+            namespace: external-secrets
+
+--- 
+
+apiVersion: external-secrets.io/v1
+kind: ClusterSecretStore
+metadata:
+  name: aws-ssm-store
+spec:
+  provider:
+    aws:
+      service: ParameterStore
+      region: ap-south-1
+      auth:
+        jwt:
+          serviceAccountRef:
+            name: external-secrets
+            namespace: external-secrets

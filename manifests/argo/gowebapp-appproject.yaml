@@ -26,6 +26,8 @@ spec:
       kind: Namespace
     # - group: "argoproj.io"
     #   kind: Application
+    - group: external-secrets.io
+      kind: ClusterSecretStore
   
   # Allow namespace-scoped resources
   namespaceResourceWhitelist:
@@ -64,8 +66,6 @@ spec:
       kind: ExternalSecret
     # - group: external-secrets.io
     #   kind: SecretStore
-    # - group: external-secrets.io
-    #   kind: ClusterSecretStore
     
     # Networking
     - group: networking.k8s.io
