@@ -1,0 +1,229 @@
+# init-db-job.yaml
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: gowebapp-db-init
+  namespace: gowebapp
+  annotations:
+    argocd.argoproj.io/sync-wave: "1"
+    argocd.argoproj.io/hook: Sync
+    argocd.argoproj.io/hook-delete-policy: HookSucceeded
+spec:
+  ttlSecondsAfterFinished: 300
+  template:
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: mysql-client
+        image: mysql:8.0
+        command:
+        - /bin/bash
+        - -c
+        - |
+          #!/bin/bash
+          set -e
+
+          echo "⏳ Waiting for database to be ready..."
+
+          # Read root credentials from mounted secrets
+          ROOT_USER=$(cat /root-secrets/username)
+          ROOT_PASS=$(cat /root-secrets/password)
+          DB_HOST=$(cat /db-endpoint/host)
+          DB_PORT=$(cat /db-endpoint/port)
+
+          # Read app credentials
+          APP_USER=$(cat /app-secrets/username)
+          APP_PASS=$(cat /app-secrets/password)
+          APP_DB=$(cat /app-secrets/database)
+
+          # Wait for database to be reachable
+          until mysql \
+            -h "$DB_HOST" \
+            -P "$DB_PORT" \
+            -u "$ROOT_USER" \
+            -p"$ROOT_PASS" \
+            -e "SELECT 1" &>/dev/null; do
+            echo "Waiting for database connection..."
+            sleep 5
+          done
+
+          echo "✅ Connected to database"
+
+          # ── Run SQL matching demo.sql exactly ──────────
+          mysql \
+            -h "$DB_HOST" \
+            -P "$DB_PORT" \
+            -u "$ROOT_USER" \
+            -p"$ROOT_PASS" << EOF
+
+          -- Setup preferences
+          SET NAMES utf8 COLLATE 'utf8_unicode_ci';
+          SET foreign_key_checks = 1;
+          SET time_zone = '+00:00';
+          SET sql_mode = 'NO_AUTO_VALUE_ON_ZERO';
+          SET default_storage_engine = InnoDB;
+          SET CHARACTER SET utf8;
+
+          CREATE DATABASE IF NOT EXISTS \`$APP_DB\`
+            DEFAULT CHARSET = utf8
+            COLLATE = utf8_unicode_ci;
+
+          USE \`$APP_DB\`;
+
+          -- user_status table
+          CREATE TABLE IF NOT EXISTS user_status (
+              id         TINYINT(1) UNSIGNED NOT NULL AUTO_INCREMENT,
+              status     VARCHAR(25) NOT NULL,
+              created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+              deleted    TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
+              PRIMARY KEY (id)
+          );
+
+          -- user table
+          CREATE TABLE IF NOT EXISTS  user (
+              id         INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+              first_name VARCHAR(50) NOT NULL,
+              last_name  VARCHAR(50) NOT NULL,
+              email      VARCHAR(100) NOT NULL,
+              password   CHAR(60) NOT NULL,
+              status_id  TINYINT(1) UNSIGNED NOT NULL DEFAULT 1,
+              created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+              deleted    TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
+              UNIQUE KEY (email),
+              CONSTRAINT \`f_user_status\`
+                FOREIGN KEY (\`status_id\`)
+                REFERENCES \`user_status\` (\`id\`)
+                ON DELETE CASCADE
+                ON UPDATE CASCADE,
+              PRIMARY KEY (id)
+          );
+
+          -- Seed data
+          INSERT IGNORE INTO \`user_status\` 
+            (\`id\`, \`status\`, \`created_at\`, \`updated_at\`, \`deleted\`)
+          VALUES 
+            (1, 'active',   CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0),
+            (2, 'inactive', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, 0);
+
+          -- note table
+          CREATE TABLE IF NOT EXISTS note (
+              id         INT(10) UNSIGNED NOT NULL AUTO_INCREMENT,
+              content    TEXT NOT NULL,
+              user_id    INT(10) UNSIGNED NOT NULL,
+              created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+              updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+              deleted    TINYINT(1) UNSIGNED NOT NULL DEFAULT 0,
+              CONSTRAINT \`f_note_user\`
+                FOREIGN KEY (\`user_id\`)
+                REFERENCES \`user\` (\`id\`)
+                ON DELETE CASCADE
+                ON UPDATE CASCADE,
+              PRIMARY KEY (id)
+          );
+
+          EOF
+
+          echo "✅ Tables created matching demo.sql"
+
+          # ── Create app user + grant access ────────────
+          mysql \
+            -h "$DB_HOST" \
+            -P "$DB_PORT" \
+            -u "$ROOT_USER" \
+            -p"$ROOT_PASS" << EOF
+
+          CREATE USER IF NOT EXISTS '$APP_USER'@'%'
+            IDENTIFIED BY '$APP_PASS';
+
+          GRANT ALL PRIVILEGES ON \`$APP_DB\`.* TO '$APP_USER'@'%';
+
+          FLUSH PRIVILEGES;
+          EOF
+
+          echo "✅ App user $APP_USER created and granted access"
+
+          # ── Test app user connection ───────────────────
+          echo "Testing app user connection..."
+          if mysql \
+            -h "$DB_HOST" \
+            -P "$DB_PORT" \
+            -u "$APP_USER" \
+            -p"$APP_PASS" \
+            "$APP_DB" \
+            -e "SHOW TABLES;" &>/dev/null; then
+            echo "✅ App user connection successful!"
+          else
+            echo "❌ App user connection failed!"
+            exit 1
+          fi
+
+          # ── Verify tables match demo.sql ──────────────
+          echo "Verifying tables..."
+          mysql \
+            -h "$DB_HOST" \
+            -P "$DB_PORT" \
+            -u "$APP_USER" \
+            -p"$APP_PASS" \
+            "$APP_DB" \
+            -e "SHOW TABLES;"
+
+          echo "Verifying seed data..."
+          mysql \
+            -h "$DB_HOST" \
+            -P "$DB_PORT" \
+            -u "$APP_USER" \
+            -p"$APP_PASS" \
+            "$APP_DB" \
+            -e "SELECT * FROM user_status;"
+
+          echo "🎉 Database initialized successfully matching demo.sql!"
+
+        volumeMounts:
+        - name: db-root-credentials
+          mountPath: /root-secrets
+          readOnly: true
+        - name: db-app-credentials
+          mountPath: /app-secrets
+          readOnly: true
+        - name: db-endpoint
+          mountPath: /db-endpoint
+          readOnly: true
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+
+      volumes:
+        - name: db-root-credentials
+          secret:
+            secretName: db-root-credentials
+            items:
+              - key: username
+                path: username
+              - key: password
+                path: password
+        - name:  db-app-credentials
+          secret:
+            secretName: db-app-credentials
+            items:
+              - key: username
+                path: username
+              - key: password
+                path: password
+              - key: database
+                path: database
+            defaultMode: 0644
+        - name: db-endpoint
+          secret:
+            secretName: db-endpoint
+            items:
+              - key: host
+                path: host
+              - key: port
+                path: port
+            defaultMode: 0644

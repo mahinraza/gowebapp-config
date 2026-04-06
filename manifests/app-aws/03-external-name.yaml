@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: mysql-external-service
+  namespace: gowebapp
+  labels:
+    app: mysql
+  annotations:
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  type: ExternalName
+  externalName: gowebapp-rds-instance.cvyqsiamqw4e.ap-south-1.rds.amazonaws.com
+  ports:
+    - name: mysql
+      port: 3306        # Required: The port that the service will expose
+      targetPort: 3306  # Optional: The port on the external service (defaults to port)
