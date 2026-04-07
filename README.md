@@ -656,7 +656,14 @@ argocd repo add https://github.com/mahinraza/gowebapp-config.git \
   --password <your-github-pat-token>
 ```
 
-### 15. Deploy via ArgoCD
+### 15. Deploy ArgoCD Project
+
+```bash
+cd manifests
+kubectl apply -f argocd/gowebapp-appproject.yaml
+```
+
+### 16. Deploy via ArgoCD
 
 ```bash
 cd manifests
@@ -664,7 +671,7 @@ kubectl apply -f argocd/gowebapp-app-helm-aws.yaml
 argocd app sync gowebapp
 ```
 
-### 16. Verify deployment
+### 17. Verify deployment
 
 ```bash
 # Check pods
