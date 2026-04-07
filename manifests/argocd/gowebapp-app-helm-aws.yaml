@@ -3,16 +3,26 @@ kind: Application
 metadata:
   name: gowebapp
   namespace: argocd
+  # finalizers:
+  # - resources-finalizer.argocd.argoproj.io
 spec:
   project: gowebapp-project
   
   source:
-    repoURL: https://github.com/mahinraza/gowebapp-config.git
-    targetRevision: main
-    path: manifests/app-do
-    directory:
-      recurse: true
-  
+    repoURL: https://mahinraza.github.io/helm-charts/
+    chart: gowebapp
+    targetRevision: 3.0.10
+    helm:
+      releaseName: gowebapp
+      parameters:
+        - name: "externalDatabase.host"
+          value: "gowebapp-rds-instance.cvyqsiamqw4e.ap-south-1.rds.amazonaws.com"
+        - name: "externalDatabase.port"
+          value: "3306"
+        - name: "externalSecrets.secrets.appCredentials.vaultPath"
+          value: "gowebapp/prod/database/app_cred"
+        - name: "externalSecrets.secrets.rootCredentials.vaultPath"
+          value: "rds!db-bb524ec1-8ee2-4c1d-8f61-d8ad9c08b62a"
   destination:
     server: https://kubernetes.default.svc
     namespace: gowebapp

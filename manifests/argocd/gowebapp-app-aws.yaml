@@ -3,20 +3,18 @@ kind: Application
 metadata:
   name: gowebapp
   namespace: argocd
+  finalizers:
+  - resources-finalizer.argocd.argoproj.io
 spec:
   project: gowebapp-project
   
   source:
-    repoURL: https://mahinraza.github.io/helm-charts/
-    chart: gowebapp
-    targetRevision: 3.0.0
-    helm:
-      releaseName: gowebapp
-      parameters:
-        - name: "externalDatabase.host"
-          value: "<db-hostname>"
-        - name: "externalDatabase.port"
-          value: "<db-port>"
+    repoURL: https://github.com/mahinraza/gowebapp-config.git
+    targetRevision: main
+    path: manifests/app-aws
+    directory:
+      recurse: true
+  
   destination:
     server: https://kubernetes.default.svc
     namespace: gowebapp
