@@ -16,7 +16,7 @@
 - [Helm Chart](#helm-chart)
 - [Repositories](#repositories)
 - [Getting Started](#getting-started)
-- [Environment](#environments)
+- [Screenshots](#screenshots)
 - [Security-Highlights](#security-highlights)
 
 ---
@@ -718,7 +718,7 @@ aws s3api delete-bucket \
 
 ---
 
-### Screenshots
+## Screenshots
 
 ![](/images/image.png)
 ![](/images/image%20(11).png)
