@@ -192,15 +192,15 @@ vault secrets list -detailed
 
 # Store ROOT credentials (for admin tasks)
 vault kv put kv/prod/do/database/mysql/root_cred \
-  username="doadmin" \
-  password="AVNS_iIrzYX1Jih9ShTjPl3X"
+  username="<MASTER_USER>" \
+  password="<MASTER_USER_PASSWORD>"
 
 # Store APPLICATION credentials (for the app to use)
 vault kv put kv/prod/gowebapp/database/app_cred \
-  username="gowebapp_user" \
-  password="ThEsTrOnGpAsSwOrD" \
-  database="gowebapp_prod" \
-  session-secret-key="r4B?EThaSEh_drudR7P_hub=s#s2Pah"
+  username="<APP_USER>" \
+  password="<APP_USER_PASSWORD>" \
+  database="<APP_DATABASE>" \
+  session-secret-key="<SECRET_SESSION_KEY>"
 
 vault kv put kv/prod/do/database/mysql/endpoint \
   host="mysql-external-service.gowebapp.svc.cluster.local" \
@@ -272,7 +272,6 @@ vault write auth/approle/login \
   secret_id="${SECRET_ID}"
 
 export VAULT_TOKEN="s.xxxxxxxxxxxx"
-export VAULT_TOKEN="hvs.CAESIMN_-kUw7IRlAXL6kvY7qHbGPM6-uOCyeF8N2a2yrpNIGh4KHGh2cy51dDhJUUh3MjByT3ZDMUJ1S2lERkdsclg"
 
 vault kv get kv/prod/do/database/mysql/root
 vault kv get kv/prod/gowebapp/database/app
