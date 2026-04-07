@@ -16,13 +16,14 @@ spec:
       releaseName: gowebapp
       parameters:
         - name: "externalDatabase.host"
-          value: "gowebapp-rds-instance.cvyqsiamqw4e.ap-south-1.rds.amazonaws.com"
+          value: "<db-hostname>"
         - name: "externalDatabase.port"
-          value: "3306"
+          value: "<db-port>"
         - name: "externalSecrets.secrets.appCredentials.vaultPath"
-          value: "gowebapp/prod/database/app_cred"
+          value: "<app-credentials-path>"
+          # value: "gowebapp/prod/database/app_cred"
         - name: "externalSecrets.secrets.rootCredentials.vaultPath"
-          value: "rds!db-bb524ec1-8ee2-4c1d-8f61-d8ad9c08b62a"
+          value: "<root-credentials-path>"
   destination:
     server: https://kubernetes.default.svc
     namespace: gowebapp
